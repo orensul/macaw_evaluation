@@ -5,12 +5,9 @@ import pdb
 from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
 import os
 
-os.environ['HF_HOME'] = '/cs/labs/dshahaf/orens/huggingface'
-os.environ['TRANSFORMERS_CACHE'] = '/cs/labs/dshahaf/orens/huggingface'
-os.environ['HF_DATASETS_CACHE'] = '/cs/labs/dshahaf/orens/huggingface'
+
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 cache_directory = '/cs/labs/dshahaf/orens/huggingface'
-
 
 def read_args():
     parser = argparse.ArgumentParser()
@@ -18,17 +15,6 @@ def read_args():
                         help='choose how many samples to read')
     args = parser.parse_args()
     return args
-
-
-def load_macaw_model(model_name):
-    tokenizer = AutoTokenizer.from_pretrained(model_name)
-    try:
-        model = AutoModelForSeq2SeqLM.from_pretrained(model_name, cache_dir=cache_directory)
-    except Exception as e:
-        print("An error occurred:", e)
-
-    model = model.to(device)
-    return tokenizer, model
 
 
 def read_train_samples(filename, num_samples_to_read):
@@ -78,7 +64,7 @@ def main(args):
 
     tokenizer = AutoTokenizer.from_pretrained("allenai/macaw-3b")
     print("Finished to load macaw tokenizer succesfully")
-    model = AutoModelForSeq2SeqLM.from_pretrained("allenai/macaw-3b").to(device)
+    model = AutoModelForSeq2SeqLM.from_pretrained("allenai/macaw-3b", cache_dir=cache_directory).to(device)
     print("Finished to load macaw model succesfully")
 
     samples = read_train_samples('ETHICS_train_samples.jsonl', num_samples_to_read)
