@@ -55,14 +55,21 @@ def call_macaw(tokenizer, model, sample, with_context):
     return macaw_answer
 
 
-def macaw_eval_samples(tokenizer, model, samples, with_context):
-    count_correct_answers = 0
+def macaw_eval_samples(tokenizer, model, samples, output_file_name, with_context):
+    output_file = open(output_file_name, 'a')
+    count_correct_answers, count_predictions = 0, 0
+
     for sample in samples:
         macaw_answer = call_macaw(tokenizer, model, sample, with_context=with_context)[0].split('=')[1].lstrip()
         gt_answer = sample['answer']
         if macaw_answer == gt_answer:
             count_correct_answers += 1
-    return count_correct_answers
+        count_predictions += 1
+        output_file.write('prediction# ' + str(count_predictions) + ' gt_answer: ' + gt_answer + ' macaw_answer: ' + macaw_answer + ' num_correct_so_far: ' + str(count_correct_answers))
+
+    output_file.write('accuracy: ' + str(count_correct_answers / len(samples)))
+    print("macaw correct answers: " + str(count_correct_answers) + " out of " + str(len(samples)) + " questions")
+    output_file.close()
 
 
 def main(args):
@@ -84,13 +91,13 @@ def main(args):
     print("Finished to read train samples successfully")
 
     print()
-    print("--- macaw evaluation")
+    print("---macaw evaluation")
     print()
 
-    count_correct_answers = macaw_eval_samples(tokenizer, model, samples, with_context=run_with_context)
-    print("macaw correct answers without context: " + str(count_correct_answers) + " out of " +
-          str(len(samples)) + " questions")
-    print("accuracy without context = " + str(count_correct_answers / len(samples)))
+    output_file_name = dataset_file_name.split('.')[0] + "_output.txt"
+    macaw_eval_samples(tokenizer, model, samples, output_file_name, with_context=run_with_context)
+
+
 
 
 
