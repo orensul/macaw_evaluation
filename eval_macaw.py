@@ -17,6 +17,8 @@ def read_args():
     parser.add_argument('--run_with_context', type=bool, default=False,
                         help='choose True to run with context (elaboration), otherwise choose False')
 
+    parser.add_argument('--dataset_file_name', type=str, default="",
+                        help='choose the dataset file name')
 
     args = parser.parse_args()
     return args
@@ -66,9 +68,11 @@ def macaw_eval_samples(tokenizer, model, samples, with_context):
 def main(args):
     num_samples_to_read = args.samples_size
     run_with_context = args.run_with_context
+    dataset_file_name = args.dataset_file_name
 
     print("num samples to read : " + str(num_samples_to_read))
     print("should run with context : " + str(run_with_context))
+    print("dataset file name: " + str(dataset_file_name))
 
     tokenizer = AutoTokenizer.from_pretrained("allenai/macaw-3b")
     print("Finished to load macaw tokenizer successfully")
@@ -76,7 +80,7 @@ def main(args):
     model = AutoModelForSeq2SeqLM.from_pretrained("allenai/macaw-3b", cache_dir=cache_directory).to(device)
     print("Finished to load macaw model successfully")
 
-    samples = read_train_samples('ETHICS_train_samples.jsonl', num_samples_to_read)
+    samples = read_train_samples(dataset_file_name, num_samples_to_read)
     print("Finished to read train samples successfully")
 
     print()
