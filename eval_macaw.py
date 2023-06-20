@@ -7,10 +7,17 @@ from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 cache_directory = '/cs/labs/dshahaf/orens/huggingface'
 
+
 def read_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--samples_size', type=int, default=1000,
+
+    parser.add_argument('--samples_size', type=int, default=-1,
                         help='choose how many samples to read')
+
+    parser.add_argument('--run_with_context', type=bool, default=False,
+                        help='choose True to run with context (elaboration), otherwise choose False')
+
+
     args = parser.parse_args()
     return args
 
@@ -58,33 +65,29 @@ def macaw_eval_samples(tokenizer, model, samples, with_context):
 
 def main(args):
     num_samples_to_read = args.samples_size
+    run_with_context = args.run_with_context
+
     print("num samples to read : " + str(num_samples_to_read))
+    print("should run with context : " + str(run_with_context))
 
     tokenizer = AutoTokenizer.from_pretrained("allenai/macaw-3b")
-    print("Finished to load macaw tokenizer succesfully")
+    print("Finished to load macaw tokenizer successfully")
+
     model = AutoModelForSeq2SeqLM.from_pretrained("allenai/macaw-3b", cache_dir=cache_directory).to(device)
-    print("Finished to load macaw model succesfully")
+    print("Finished to load macaw model successfully")
 
     samples = read_train_samples('ETHICS_train_samples.jsonl', num_samples_to_read)
-    print("Finished to read train samples succesfully")
+    print("Finished to read train samples successfully")
 
     print()
-    print("--- macaw evaluation without context ---")
+    print("--- macaw evaluation")
     print()
 
-    count_correct_answers = macaw_eval_samples(tokenizer, model, samples, with_context=False)
+    count_correct_answers = macaw_eval_samples(tokenizer, model, samples, with_context=run_with_context)
     print("macaw correct answers without context: " + str(count_correct_answers) + " out of " +
           str(len(samples)) + " questions")
     print("accuracy without context = " + str(count_correct_answers / len(samples)))
 
-    print()
-    print("--- macaw evaluation with context ---")
-    print()
-
-    count_correct_answers = macaw_eval_samples(tokenizer, model, samples, with_context=True)
-    print("macaw correct answers with context: " + str(count_correct_answers) + " out of " +
-          str(len(samples)) + " questions")
-    print("accuracy with context = " + str(count_correct_answers / len(samples)))
 
 
 if __name__ == "__main__":
