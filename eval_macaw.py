@@ -1,6 +1,8 @@
 import torch
 import json
 import argparse
+import pandas as pd
+import os
 from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
 
 
@@ -59,21 +61,14 @@ def call_macaw(tokenizer, model, sample, with_context):
     return macaw_answer
 
 
-def macaw_eval_samples(tokenizer, model, samples, output_file_name, with_context):
-    output_file = open(output_file_name, 'a')
-    count_correct_answers, count_predictions = 0, 0
-
+def macaw_eval_samples(tokenizer, model, samples, with_context):
+    df = pd.DataFrame(columns=['gt_ans', 'macaw_ans', 'is_correct'])
     for sample in samples:
         macaw_answer = call_macaw(tokenizer, model, sample, with_context=with_context)[0].split('=')[1].lstrip()
         gt_answer = sample['answer']
-        if macaw_answer == gt_answer:
-            count_correct_answers += 1
-        count_predictions += 1
-        output_file.write('prediction# ' + str(count_predictions) + ' gt_answer: ' + gt_answer + ' macaw_answer: ' + macaw_answer + ' num_correct_so_far: ' + str(count_correct_answers))
-
-    output_file.write('accuracy: ' + str(count_correct_answers / len(samples)))
-    print("macaw correct answers: " + str(count_correct_answers) + " out of " + str(len(samples)) + " questions")
-    output_file.close()
+        is_correct = 1 if gt_answer == macaw_answer else 0
+        df.loc[len(df)] = [gt_answer, macaw_answer, is_correct]
+    return df
 
 
 def main(args):
@@ -82,8 +77,8 @@ def main(args):
     dataset_file_name = args.dataset_file_name
     model_name = args.model_name
 
-    print("num samples to read : " + str(num_samples_to_read))
-    print("should run with context : " + str(run_with_context))
+    print("num samples to read: " + str(num_samples_to_read))
+    print("should run with context: " + str(run_with_context))
     print("dataset file name: " + str(dataset_file_name))
 
     tokenizer = AutoTokenizer.from_pretrained(model_name)
@@ -99,8 +94,24 @@ def main(args):
     print("---macaw evaluation")
     print()
 
-    output_file_name = dataset_file_name.split('.')[0] + "_output.txt"
-    macaw_eval_samples(tokenizer, model, samples, output_file_name, with_context=run_with_context)
+    df = macaw_eval_samples(tokenizer, model, samples, with_context=run_with_context)
+
+    output_file_name = 'dataset_' + os.path.basename(dataset_file_name).split('.')[0] + '_' + 'model_' + model_name.split('/')[1] + '_sample_size_' + str(num_samples_to_read) + \
+                    '_with_context_' + str(run_with_context)
+
+    print("saving detailed results into: " + output_file_name + '_results_details' + '.csv')
+    df.to_csv(output_file_name + '_results_details' + '.csv')
+
+    count_correct_predictions = df[df['is_correct'] == 1].shape[0]
+    count_predictions = len(df)
+
+    print("saving summary results into: " + output_file_name + '_results_summary' + '.txt')
+    results_summary_output_file = open(output_file_name + '_results_summary' + '.txt', 'w')
+    results_summary_output_file.write('number of correct predictions: ' +
+                                      str(count_correct_predictions) + '\n' +
+                                      'total number of predictions: ' + str(count_predictions) + '\n' +
+                                      'accuracy: ' + str(count_correct_predictions / count_predictions))
+    results_summary_output_file.close()
 
 if __name__ == "__main__":
     args = read_args()
