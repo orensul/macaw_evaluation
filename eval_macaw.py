@@ -3,6 +3,8 @@ import json
 import argparse
 import pandas as pd
 import os
+import re
+import string
 from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
 
 
@@ -18,8 +20,7 @@ def read_args():
 
     parser.add_argument('--samples_size', type=int, default=-1, help='choose how many samples to read')
 
-    parser.add_argument('--run_with_context', type=bool, default=False,
-                        help='choose True to run with context (elaboration), otherwise choose False')
+    parser.add_argument('--run_with_context', type=int, default=0)
 
     parser.add_argument('--dataset_file_name', type=str, default="",
                         help='choose the dataset file name')
@@ -53,19 +54,35 @@ def read_samples(filename, num_samples_to_read, run_with_context):
 def call_macaw(tokenizer, model, sample, with_context):
     input_string = "$answer$ ; $mcoptions$ = " + sample['mc'] + " ; $question$ = " + sample['question']
     if with_context:
+        print("run macaw with context")
         input_string += " $context$ = " + sample['context']
 
     input_ids = tokenizer.encode(input_string, return_tensors="pt").to(device)
-    output = model.generate(input_ids)
+    output = model.generate(input_ids, max_length=200)
     macaw_answer = tokenizer.batch_decode(output, skip_special_tokens=True)
     return macaw_answer
+
+def remove_punctuation(input_string):
+    translator = str.maketrans('', '', string.punctuation)
+    no_punct = input_string.translate(translator)
+    return no_punct
+
+
 
 
 def macaw_eval_samples(tokenizer, model, samples, with_context):
     df = pd.DataFrame(columns=['gt_ans', 'macaw_ans', 'is_correct'])
     for sample in samples:
-        macaw_answer = call_macaw(tokenizer, model, sample, with_context=with_context)[0].split('=')[1].lstrip()
+        macaw_answer = call_macaw(tokenizer, model, sample, with_context=with_context)[0].split('=')[1]
+        macaw_answer = remove_punctuation(macaw_answer)
+        macaw_answer = macaw_answer.strip()
+        macaw_answer = re.sub(' +', ' ', macaw_answer)
+
         gt_answer = sample['answer']
+        gt_answer = remove_punctuation(gt_answer)
+        gt_answer = gt_answer.strip()
+        gt_answer = re.sub(' +', ' ', gt_answer)
+
         is_correct = 1 if gt_answer == macaw_answer else 0
         df.loc[len(df)] = [gt_answer, macaw_answer, is_correct]
     return df
@@ -73,7 +90,7 @@ def macaw_eval_samples(tokenizer, model, samples, with_context):
 
 def main(args):
     num_samples_to_read = args.samples_size
-    run_with_context = args.run_with_context
+    run_with_context = True if args.run_with_context == 1 else False
     dataset_file_name = args.dataset_file_name
     model_name = args.model_name
 

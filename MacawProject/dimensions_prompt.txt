@@ -1,23 +1,20 @@
-You are given a SITUATION and possible answers for the situation in ANSWERS. Your task is to choose the best four dimensions that will help you find the correct answer on the SITUATION.
-After you chose the dimensions, please elaborate the scene on these dimensions.
-Inputs: OPTIONAL_DIMENSIONS, SITUATION, ANSWERS
-Outputs: CHOSEN_DIMENSIONS, ELABORATIONS
-
-Inputs:
-OPTIONAL_DIMENSIONS:
+You are given a SITUATION and possible answers for the situation in ANSWERS.
+Your task is to choose the best four dimensions that will help you find the correct answer on the SITUATION.
+After you chose the dimensions, please elaborate on the scene with these dimensions.
+Here is the list of possible dimensions:
 'IsA' : 'A is a subtype or a specific instance of B.
-'PartOf' : 'A is a part of B. 
+'PartOf' : 'A is a part of B.
 'HasA / has part' : 'B belongs to A, either as an inherent part or due to a social construct of possession. HasA is often the reverse of PartOf.'.
 'UsedFor' : 'A is used for B; the purpose of A is B.'.
 'CapableOf' : 'Something that A can typically do is B.'.
-'AtLocation' : 'A is a typical location for B, or A is the inherent location of B. 
+'AtLocation' : 'A is a typical location for B, or A is the inherent location of B.
 'Causes' : 'A and B are events, and it is typical for A to cause B.'.
 'HasPrerequisite' : 'In order for A to happen, B needs to happen; B is a dependency of A.'.
 'HasProperty' : 'A has B as a property; A can be described as B.'.
 'Motivation' : 'motivation of character(s) before S'.
 'ObstructedBy' : 'A is a goal that can be prevented by B; B is an obstacle in the way of A.'.
 'CreatedBy' : 'B is a process or agent that creates A.'.
-'LocatedNear' : 'A and B are typically found near each other. Symmetric.'. 
+'LocatedNear' : 'A and B are typically found near each other. Symmetric.'.
 'MadeOf' : 'A is made of B.'.
 'ReceivesAction' : 'B can be done to A.'.
 'Consequence' : 'likely consequence of action described in S'.
@@ -36,6 +33,8 @@ OPTIONAL_DIMENSIONS:
 'Other Intent' : 'The Intent of person Y'.
 'Other Need' : 'What Person Y needs'.
 'ComparedTo' : 'A has attribute X to a greater extent than B'.
+Inputs: SITUATION, ANSWERS
+Outputs: CHOSEN_DIMENSIONS, ELABORATIONS
 
 Inputs:
 SITUATION: Sammy wanted to go to where the people were.  Where might he go?
@@ -44,7 +43,7 @@ Outputs:
 CHOSEN_DIMENSIONS:
 AtLocation
 HasProperty
-ELABORATIONS:[LocatedNear]: many people are located at populated areas
+ELABORATIONS:[AtLocation]: many people are located at populated areas
 [HasProperty]: Desert is less populated than cities
 Inputs:
 SITUATION: What home entertainment equipment requires cable?
